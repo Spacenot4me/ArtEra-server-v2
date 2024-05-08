@@ -56,7 +56,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     # который мы можем использовать для предоставления User в пользовательском
     # интерфейсе. Мы так же проиндексируем этот столбец в базе данных для
     # повышения скорости поиска в дальнейшем.
-    username = models.CharField(db_index=True, max_length=255, unique=True, )
+    username = models.CharField(db_index=True, max_length=255, unique=True, error_messages={'unique': "User with this username already exists."})
     firstname = models.TextField(default='')
     lastname = models.TextField(default='')
     # Так же мы нуждаемся в поле, с помощью которого будем иметь возможность
@@ -64,7 +64,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     # Поскольку адрес почты нам нужен в любом случае, мы также будем
     # использовать его для входы в систему, так как это наиболее
     # распространенная форма учетных данных на данный момент (ну еще телефон).
-    email = models.EmailField(db_index=True, unique=True)
+    email = models.EmailField(db_index=True, unique=True, error_messages={'unique': "User with this email already exists."})
     avatar = models.ImageField(upload_to='avatar', default='http://localhost:8000/media/avatar/default_avatar.png')
     user_background = models.ImageField(upload_to='user_background', default='http://localhost:8000/media/user_background/default_background.jpg')
     # Когда пользователь более не желает пользоваться нашей системой, он может

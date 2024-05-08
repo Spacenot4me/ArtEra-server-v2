@@ -23,6 +23,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
         model = User
         # Перечислить все поля, которые могут быть включены в запрос
         # или ответ, включая поля, явно указанные выше.
+        error_messages = {"username": {"required": "Give yourself a username"}}
         fields = ['id', 'email', 'username', 'password','avatar', 'user_background', 'token', 'role']
 
     def create(self, validated_data):

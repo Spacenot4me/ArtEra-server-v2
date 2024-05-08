@@ -1,5 +1,6 @@
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse, HttpResponseBadRequest
 from django.shortcuts import render
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import generics, status, filters
 from reactions.models import Like, Comment
 from reactions.serializers import LikesSerializer, CommentsSerializer
@@ -33,7 +34,7 @@ class LikesView(generics.RetrieveDestroyAPIView):
     lookup_field = 'pk'
 
 
-def get_reactions_count(request, post_id, owner_id):
+def get_reactions_count(request):
     """
     View-функция для подсчета лайков по post_id.
 
@@ -44,24 +45,28 @@ def get_reactions_count(request, post_id, owner_id):
     Returns:
         JsonResponse с количеством лайков.
     """
+    owner_id = request.GET.get('owner_id')
+    post_id = request.GET.get('post_id')
+    if not post_id:
+        return HttpResponseBadRequest('Both owner_id and post_id must be provided')
+
+    if owner_id == '':
+        owner_id = None
 
     comment_count = Comment.objects.filter(post_id=post_id).count()
     like_count = Like.objects.filter(post_id=post_id).count()
-    if Like.objects.filter(owner_id=owner_id, post_id=post_id).exists():
-        data = {
-            "comment_count": comment_count,
-            "like_count": like_count,
-            "is_liked": True
-        }
+    is_liked = Like.objects.filter(owner_id=owner_id, post_id=post_id).exists()
 
-        return JsonResponse(data)
-    else:
-        data = {
-            "comment_count": comment_count,
-            "like_count": like_count,
-            "is_liked": False
-        }
-        return JsonResponse(data)
+    data = {
+        "comment_count": comment_count,
+        "like_count": like_count,
+        "is_liked": False
+    }
+
+    if owner_id:
+        data["is_liked"] = is_liked
+
+    return JsonResponse(data)
 
 
 """
@@ -78,4 +83,22 @@ def get_liked_posts(request, owner_id):
         response = requests.get(f'http://localhost:8000/api/posts/{post_id}')
         if response.status_code == 200:
             liked_posts.append(response.json())
-    return JsonResponse({"liked_posts": liked_posts})
+    return JsonResponse(liked_posts, safe=False)
+
+
+def safe_create_delete_like(request, owner_id, post_id):
+    owner_id = request.GET.get('owner_id')
+    post_id = request.GET.get('post_id')
+    if not owner_id or not post_id:
+        return HttpResponseBadRequest('Both owner_id and post_id must be provided')
+
+    try:
+        like = Like.objects.get(owner_id=owner_id, post_id=post_id)
+        like.delete()
+        return JsonResponse({'status': 'success', 'message': 'Like successfully deleted'}, status=202)
+    except Like.DoesNotExist:
+        try:
+            Like.objects.create(owner_id=owner_id, post_id=post_id)
+            return JsonResponse({'status': 'success', 'message': 'Like successfully created'}, status=201)
+        except Exception as e:
+            return HttpResponseBadRequest('Bad attempt to create like: {}'.format(str(e)))
