@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import User, Post
+from .models import User
 from django.contrib.auth import authenticate
 
 
@@ -116,13 +116,4 @@ class UsersSerializer(serializers.ModelSerializer):
         ]
 
 
-class PostSerializer(serializers.ModelSerializer):
 
-    class Meta:
-        model = Post
-        fields = ['id',
-                  'title',
-                  'description',
-                  'owner',
-                  'picture',
-                  'published_at',]

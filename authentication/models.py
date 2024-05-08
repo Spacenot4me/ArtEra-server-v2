@@ -65,8 +65,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     # использовать его для входы в систему, так как это наиболее
     # распространенная форма учетных данных на данный момент (ну еще телефон).
     email = models.EmailField(db_index=True, unique=True)
-    avatar = models.ImageField(upload_to='avatar', default='media/avatar/default_avatar.png')
-    user_background = models.ImageField(upload_to='user_background', default='media/user_background/default_background.jpg')
+    avatar = models.ImageField(upload_to='avatar', default='http://localhost:8000/media/avatar/default_avatar.png')
+    user_background = models.ImageField(upload_to='user_background', default='http://localhost:8000/media/user_background/default_background.jpg')
     # Когда пользователь более не желает пользоваться нашей системой, он может
     # захотеть удалить свой аккаунт. Для нас это проблема, так как собираемые
     # нами данные очень ценны, и мы не хотим их удалять :) Мы просто предложим
@@ -141,17 +141,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         return token.encode('utf-8')
 
 
-class Post(models.Model):
-    #id
-    title = models.CharField(max_length=100) # name of post
-    description = models.CharField(max_length=1000)  # TODO поменять лимит
-    owner = models.BigIntegerField()  # TODO id пользователя
-    picture = models.ImageField(upload_to='images')  # TODO сделать статику с хранением картинок
-    published_at = models.DateTimeField(auto_now=True)  # Date when published
 
-    def __str__(self):
-        """ Строковое представление модели (отображается в консоли) """
-        return self.title
 
 
 

@@ -1,11 +1,12 @@
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import generics
 from django.shortcuts import render
 from rest_framework.pagination import PageNumberPagination
 import json
 
 from .renderers import UserJSONRenderer
-from authentication.models import User, Post
-from authentication.serializers import RegistrationSerializer, PostSerializer, UsersSerializer
+from authentication.models import User
+from authentication.serializers import RegistrationSerializer, UsersSerializer
 from rest_framework import status, filters
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -63,33 +64,6 @@ class GetAllUsersAPI(generics.ListCreateAPIView):
     serializer_class = UsersSerializer
     filter_backends = [filters.SearchFilter]
     search_fields = ['username']
-class PostListPagination(PageNumberPagination):
-    page_size = 10
-    page_size_query_param = 'page_size'
-    max_page_size=20
-    def get_paginated_response(self, data):
-        return Response({
-            'next': self.page.next_page_number() if self.page.has_next() else None,
-            'previous': self.page.previous_page_number() if self.page.has_previous() else None,
-            'count': self.page.paginator.count,
-            'results': data
-        })
 
-class PostListCreate(generics.ListCreateAPIView):
-    queryset = Post.objects.all()
-    serializer_class = PostSerializer
-    pagination_class = PostListPagination
-    filter_backends = [filters.SearchFilter]
-    search_fields = ['title']
-    def get_queryset(self):
-        # get the sort parameter value from request
-        sort_by = self.request.query_params.get('sort', '-id')
-        return Post.objects.all().order_by(sort_by)
-
-
-class PostRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Post.objects.all()
-    serializer_class = PostSerializer
-    lookup_field = 'pk'
 
 

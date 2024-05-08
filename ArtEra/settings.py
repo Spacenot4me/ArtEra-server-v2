@@ -31,6 +31,7 @@ ALLOWED_HOSTS = ['*']
 # Application definition
 
 INSTALLED_APPS = [
+    'django_filters',
     'channels',
     'daphne',
     'django.contrib.admin',
@@ -42,7 +43,9 @@ INSTALLED_APPS = [
     'authentication',
     'rest_framework',
     'reactions',
-    'chat'
+    'chat',
+    'content',
+
 ]
 
 MIDDLEWARE = [
@@ -140,7 +143,9 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
-
+REST_FRAMEWORK = {
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
+}
 
 
 
