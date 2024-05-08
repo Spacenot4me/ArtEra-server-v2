@@ -1,7 +1,14 @@
+import json
+
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import JsonResponse, HttpResponse, HttpResponseBadRequest
 from django.shortcuts import render
+from django.views.decorators.csrf import csrf_exempt
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import generics, status, filters
+
+from content.models import Post
+from content.serializers import PostSerializer
 from reactions.models import Like, Comment
 from reactions.serializers import LikesSerializer, CommentsSerializer
 import requests
@@ -76,19 +83,25 @@ def get_liked_posts(request, owner_id):
 """
 
 
+
 def get_liked_posts(request, owner_id):
     liked_posts_ids = Like.objects.filter(owner_id=owner_id).values_list('post_id', flat=True)
     liked_posts = []
     for post_id in liked_posts_ids:
-        response = requests.get(f'http://localhost:8000/api/posts/{post_id}')
-        if response.status_code == 200:
-            liked_posts.append(response.json())
+        try:
+            post = Post.objects.get(id=post_id)
+            serializer = PostSerializer(post, context={'request': request})
+            liked_posts.append(serializer.data)
+            print(serializer.data)
+        except ObjectDoesNotExist:
+            pass
     return JsonResponse(liked_posts, safe=False)
 
-
-def safe_create_delete_like(request, owner_id, post_id):
-    owner_id = request.GET.get('owner_id')
-    post_id = request.GET.get('post_id')
+@csrf_exempt
+def safe_create_delete_like(request):
+    data = json.loads(request.body.decode('utf-8'))
+    owner_id = data.get('owner_id')
+    post_id = data.get('post_id')
     if not owner_id or not post_id:
         return HttpResponseBadRequest('Both owner_id and post_id must be provided')
 

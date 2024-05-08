@@ -12,3 +12,7 @@ class PostSerializer(serializers.ModelSerializer):
                   'owner',
                   'picture',
                   'published_at', ]
+    def get_picture(self, obj):
+        request = self.context.get('request')
+        picture_url = obj.picture.url
+        return request.build_absolute_uri(picture_url)
