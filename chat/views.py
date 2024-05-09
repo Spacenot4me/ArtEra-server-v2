@@ -1,20 +1,18 @@
+# chat/views.py
+
 from django.shortcuts import render
 
-# Create your views here.
-from rest_framework.generics import GenericAPIView
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from rest_framework import status
-from .serializers import ChatSerializer
-from .models import Chat
+from chat.models import Room
 
 
+def index_view(request):
+    return render(request, 'index.html', {
+        'rooms': Room.objects.all(),
+    })
 
-class GetChat(GenericAPIView):
-    permission_classes = [IsAuthenticated]
-    serializer_class = ChatSerializer
 
-    def get(self, request):
-        chat, created = Chat.objects.get_or_create(initiator__id=request.user.pk)
-        serializer = self.serializer_class(instance=chat)
-        return Response({"message": "Chat gotten", "data": serializer.data}, status=status.HTTP_200_OK)
+def room_view(request, room_name):
+    chat_room, created = Room.objects.get_or_create(name=room_name)
+    return render(request, 'room.html', {
+        'room': chat_room,
+    })

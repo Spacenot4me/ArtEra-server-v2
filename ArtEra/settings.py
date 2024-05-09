@@ -31,9 +31,10 @@ ALLOWED_HOSTS = ['*']
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
+
     'django_filters',
     'channels',
-    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -43,8 +44,8 @@ INSTALLED_APPS = [
     'authentication',
     'rest_framework',
     'reactions',
-    'chat',
     'content',
+    'chat.apps.ChatConfig',
 
 ]
 
@@ -147,6 +148,17 @@ REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
 }
 
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],
+        },
+    },
+}
+
+
+#docker run --rm -p 6379:6379 redis:7
 
 
 

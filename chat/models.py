@@ -1,20 +1,34 @@
-from django.contrib.auth.models import User
-import uuid
-from django.utils import timezone
-from django.conf import settings
+# chat/models.py
+
 from django.db import models
-class Chat(models.Model):
-    initiator = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.DO_NOTHING, related_name="initiator_chat"
-    )
-    acceptor = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.DO_NOTHING, related_name="acceptor_name"
-    )
-    short_id = models.CharField(max_length=255, default=uuid.uuid4, unique=True)
+
+from ArtEra import settings
 
 
-class ChatMessage(models.Model):
-    chat = models.ForeignKey(Chat, on_delete=models.CASCADE, related_name="messages")
-    sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.DO_NOTHING)
-    text = models.TextField()
-    created_at = models.DateTimeField(default=timezone.now)
+class Room(models.Model):
+    name = models.CharField(max_length=128)
+    online = models.ManyToManyField(to=settings.AUTH_USER_MODEL, blank=True)
+
+    def get_online_count(self):
+        return self.online.count()
+
+    def join(self, user):
+        self.online.add(user)
+        self.save()
+
+    def leave(self, user):
+        self.online.remove(user)
+        self.save()
+
+    def __str__(self):
+        return f'{self.name} ({self.get_online_count()})'
+
+
+class Message(models.Model):
+    user = models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    room = models.ForeignKey(to=Room, on_delete=models.CASCADE)
+    content = models.CharField(max_length=512)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'{self.user.username}: {self.content} [{self.timestamp}]'
