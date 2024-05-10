@@ -1,6 +1,5 @@
 from django.db import models
 from datetime import datetime, timedelta
-from openai import OpenAI
 from rest_framework import status
 from rest_framework.response import Response
 

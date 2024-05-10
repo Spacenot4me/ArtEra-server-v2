@@ -5,8 +5,12 @@ from .models import *
 from .serializers import *
 from rest_framework import status, filters
 from rest_framework.response import Response
-
-
+from django.http import JsonResponse
+import requests
+import base64
+from django.http import HttpResponse
+from PIL import Image
+import io
 # Create your views here.
 class PostListPagination(PageNumberPagination):
     page_size = 10
@@ -45,33 +49,25 @@ class GenImageCollector(generics.ListCreateAPIView):
     queryset = ImageCollector.objects.all()
     serializer_class = ImageCollectorSerializer
 
-    def create(self, request, *args, **kwargs):
-        # Получаем prompt из запроса
-        prompt = request.data.get("prompt")
 
-        # Отправляем prompt в модель DALL-E
-        client = OpenAI()
-        response = client.images.generate(
-            model="dall-e-3",
-            prompt=prompt,
-            size="1024x1024",
-            quality="standard",
-            n=1,
-        )
 
-        # Получаем URL сгенерированной картинки
-        image_url = response.data[0].url
+def send_and_receive_json(request):
+    url = 'http://127.0.0.1:7860/sdapi/v1/txt2img'  # Замените на ваш URL
+    data = {
+        "prompt": "beautiful dog",
+        "negative_prompt": "",
+        "styles": [""],
+        "seed": -1,
+        "steps": 10,
+        "width": 512,
+        "height": 512
+    }
+    response = requests.post(url, json=data)
+    response_data = response.json()
 
-        # Создаем объект ImageCollector и сохраняем результат
-        owner = request.user.id  # Предполагается, что у вас есть аутентификация пользователей
-        image_collector = ImageCollector.objects.create(
-            prompt=prompt,
-            owner=owner,
-            picture=image_url,
-        )
+    # Предполагается, что 'images' содержит изображение в формате base64
+    image_base64 = response_data.get('images')
+    return JsonResponse(image_base64[0], safe=False)
 
-        # Возвращаем успешный ответ
-        return Response(
-            {"message": "Изображение успешно сохранено", "image_url": image_url},
-            status=status.HTTP_201_CREATED,
-        )
+
+
