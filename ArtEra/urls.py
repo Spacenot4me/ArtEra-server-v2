@@ -25,7 +25,6 @@ urlpatterns = [
     path('api/', include('reactions.urls', namespace='reactions')),
     path('api/', include('authentication.urls', namespace='authentication')),
     path('api/', include('content.urls', namespace='content')),
-    path('chat/', include('chat.urls')),  # new
 
 ]
 if settings.DEBUG:

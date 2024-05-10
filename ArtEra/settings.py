@@ -45,7 +45,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'reactions',
     'content',
-    'chat.apps.ChatConfig',
+
 
 ]
 

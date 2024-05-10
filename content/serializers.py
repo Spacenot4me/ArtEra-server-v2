@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Post
+from .models import *
 
 
 class PostSerializer(serializers.ModelSerializer):
@@ -16,3 +16,8 @@ class PostSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         picture_url = obj.picture.url
         return request.build_absolute_uri(picture_url)
+
+class ImageCollectorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ImageCollector
+        fields = ['id', 'prompt', 'owner', 'picture' , 'published_at']

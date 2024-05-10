@@ -5,4 +5,5 @@ app_name = 'content'
 urlpatterns = [
     path('posts/', PostListCreate.as_view()),
     path('posts/<int:pk>', PostRetrieveUpdateDestroy.as_view()),
+    path('genImages/', GenImageCollector.as_view()),
 ]
