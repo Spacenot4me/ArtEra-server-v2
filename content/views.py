@@ -1,3 +1,5 @@
+import json
+
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import generics
 from rest_framework.pagination import PageNumberPagination
@@ -52,16 +54,20 @@ class GenImageCollector(generics.ListCreateAPIView):
 
 
 def send_and_receive_json(request):
+    prompt = request.GET.get('prompt')
+    steps = request.GET.get('steps')
     url = 'http://127.0.0.1:7860/sdapi/v1/txt2img'  # Замените на ваш URL
     data = {
-        "prompt": "beautiful dog",
+        "prompt": prompt,
         "negative_prompt": "",
         "styles": [""],
         "seed": -1,
-        "steps": 10,
+        "steps": steps,
         "width": 512,
         "height": 512
     }
+
+    print(data)
     response = requests.post(url, json=data)
     response_data = response.json()
 
