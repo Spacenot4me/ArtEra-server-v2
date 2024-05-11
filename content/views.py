@@ -1,5 +1,6 @@
 import json
 
+from django.views.decorators.csrf import csrf_exempt
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import generics
 from rest_framework.pagination import PageNumberPagination
@@ -13,6 +14,8 @@ import base64
 from django.http import HttpResponse
 from PIL import Image
 import io
+
+
 # Create your views here.
 class PostListPagination(PageNumberPagination):
     page_size = 10
@@ -47,33 +50,49 @@ class PostRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = PostSerializer
     lookup_field = 'pk'
 
+
 class GenImageCollector(generics.ListCreateAPIView):
     queryset = ImageCollector.objects.all()
     serializer_class = ImageCollectorSerializer
 
 
-
+@csrf_exempt
 def send_and_receive_json(request):
-    prompt = request.GET.get('prompt')
-    steps = request.GET.get('steps')
-    url = 'http://127.0.0.1:7860/sdapi/v1/txt2img'  # Замените на ваш URL
-    data = {
-        "prompt": prompt,
-        "negative_prompt": "",
-        "styles": [""],
-        "seed": -1,
-        "steps": steps,
-        "width": 512,
-        "height": 512
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        prompt = data.get('prompt')
+        steps = data.get('steps')
+        url = 'http://127.0.0.1:7860/sdapi/v1/txt2img'  # Замените на ваш URL
+        data = {
+            "prompt": prompt,
+            "negative_prompt": "",
+            "styles": [""],
+            "seed": -1,
+            "steps": steps,
+            "width": 1024,
+            "height": 1024
+        }
+
+        response = requests.post(url, json=data)
+        response_data = response.json()
+
+        # Предполагается, что 'images' содержит изображение в формате base64
+        image_base64 = response_data.get('images')
+        return JsonResponse(image_base64[0], safe=False)
+    else:
+        return JsonResponse({"error": "Invalid method"}, status=400)
+
+
+def get_status_of_generation(request):
+    url = 'http://127.0.0.1:7860/sdapi/v1/progress'
+    response = requests.get(url)
+    data = response.json()  # Получаем JSON из ответа
+
+    # Создаем новый словарь только с progress и job_count
+    new_data = {
+        'progress': data['progress'],
+        'job_count': data['state']['job_count']
     }
 
-    print(data)
-    response = requests.post(url, json=data)
-    response_data = response.json()
-
-    # Предполагается, что 'images' содержит изображение в формате base64
-    image_base64 = response_data.get('images')
-    return JsonResponse(image_base64[0], safe=False)
-
-
+    return JsonResponse(new_data, safe=False)  # Возвращаем JSON как Django JsonResponse
 
