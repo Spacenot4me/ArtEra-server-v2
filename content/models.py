@@ -19,15 +19,11 @@ class Post(models.Model):
         return self.title
 
 
-class ImageCollector(models.Model):
-    # id
-    prompt = models.TextField()
-    owner = models.BigIntegerField()
-    picture = models.ImageField(upload_to='generetared_images')
-    published_at = models.DateTimeField(auto_now=True)  # Date when published
+class PostImage(models.Model):
+    post = models.ForeignKey(Post, related_name='images', on_delete=models.CASCADE)
+    image = models.ImageField(upload_to='images')
 
-    def __str__(self):
-        """ Строковое представление модели (отображается в консоли) """
-        return self.owner
+
+
 
 
