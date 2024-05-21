@@ -42,3 +42,37 @@ class PostRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     lookup_field = 'pk'
 
 
+class GenImageCollector(generics.ListCreateAPIView):
+    queryset = ImageCollector.objects.all()
+    serializer_class = ImageCollectorSerializer
+
+    def create(self, request, *args, **kwargs):
+        # Получаем prompt из запроса
+        prompt = request.data.get("prompt")
+
+        # Отправляем prompt в модель DALL-E
+        client = OpenAI()
+        response = client.images.generate(
+            model="dall-e-3",
+            prompt=prompt,
+            size="1024x1024",
+            quality="standard",
+            n=1,
+        )
+
+        # Получаем URL сгенерированной картинки
+        image_url = response.data[0].url
+
+        # Создаем объект ImageCollector и сохраняем результат
+        owner = request.user.id  # Предполагается, что у вас есть аутентификация пользователей
+        image_collector = ImageCollector.objects.create(
+            prompt=prompt,
+            owner=owner,
+            picture=image_url,
+        )
+
+        # Возвращаем успешный ответ
+        return Response(
+            {"message": "Изображение успешно сохранено", "image_url": image_url},
+            status=status.HTTP_201_CREATED,
+        )

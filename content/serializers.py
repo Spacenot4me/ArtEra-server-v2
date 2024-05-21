@@ -32,3 +32,8 @@ class PostSerializer(serializers.ModelSerializer):
             PostImage.objects.create(post=post, image=image)
         return post
 
+class ImageCollectorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ImageCollector
+        fields = ['id', 'prompt', 'owner', 'picture' , 'published_at']
+

@@ -24,6 +24,18 @@ class PostImage(models.Model):
     image = models.ImageField(upload_to='images')
 
 
+class ImageCollector(models.Model):
+    # id
+    prompt = models.TextField()
+    owner = models.BigIntegerField()
+    picture = models.ImageField(upload_to='generetared_images')
+    published_at = models.DateTimeField(auto_now=True)  # Date when published
+
+    def __str__(self):
+        """ Строковое представление модели (отображается в консоли) """
+        return self.owner
+
+
 
 
 
