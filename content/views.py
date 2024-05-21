@@ -1,3 +1,6 @@
+import json
+
+from django.views.decorators.csrf import csrf_exempt
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import generics
 from rest_framework.pagination import PageNumberPagination
@@ -5,6 +8,12 @@ from .models import *
 from .serializers import *
 from rest_framework import status, filters
 from rest_framework.response import Response
+from django.http import JsonResponse
+import requests
+import base64
+from django.http import HttpResponse
+from PIL import Image
+import io
 
 
 # Create your views here.
@@ -22,16 +31,16 @@ class PostListPagination(PageNumberPagination):
         })
 
 
-
 class PostListCreate(generics.ListCreateAPIView):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
     pagination_class = PostListPagination
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_fields = ['owner']
+    filterset_fields = ['owner']  # добавьте это\
     search_fields = ['title']
 
     def get_queryset(self):
+        # get the sort parameter value from request
         sort_by = self.request.query_params.get('sort', '-id')
         return Post.objects.all().order_by(sort_by)
 
@@ -46,33 +55,44 @@ class GenImageCollector(generics.ListCreateAPIView):
     queryset = ImageCollector.objects.all()
     serializer_class = ImageCollectorSerializer
 
-    def create(self, request, *args, **kwargs):
-        # Получаем prompt из запроса
-        prompt = request.data.get("prompt")
 
-        # Отправляем prompt в модель DALL-E
-        client = OpenAI()
-        response = client.images.generate(
-            model="dall-e-3",
-            prompt=prompt,
-            size="1024x1024",
-            quality="standard",
-            n=1,
-        )
+@csrf_exempt
+def send_and_receive_json(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        prompt = data.get('prompt')
+        steps = data.get('steps')
+        url = 'http://127.0.0.1:7860/sdapi/v1/txt2img'  # Замените на ваш URL
+        data = {
+            "prompt": prompt,
+            "negative_prompt": "",
+            "styles": [""],
+            "seed": -1,
+            "steps": steps,
+            "width": 1024,
+            "height": 1024
+        }
 
-        # Получаем URL сгенерированной картинки
-        image_url = response.data[0].url
+        response = requests.post(url, json=data)
+        response_data = response.json()
 
-        # Создаем объект ImageCollector и сохраняем результат
-        owner = request.user.id  # Предполагается, что у вас есть аутентификация пользователей
-        image_collector = ImageCollector.objects.create(
-            prompt=prompt,
-            owner=owner,
-            picture=image_url,
-        )
+        # Предполагается, что 'images' содержит изображение в формате base64
+        image_base64 = response_data.get('images')
+        return JsonResponse(image_base64[0], safe=False)
+    else:
+        return JsonResponse({"error": "Invalid method"}, status=400)
 
-        # Возвращаем успешный ответ
-        return Response(
-            {"message": "Изображение успешно сохранено", "image_url": image_url},
-            status=status.HTTP_201_CREATED,
-        )
+
+def get_status_of_generation(request):
+    url = 'http://127.0.0.1:7860/sdapi/v1/progress'
+    response = requests.get(url)
+    data = response.json()  # Получаем JSON из ответа
+
+    # Создаем новый словарь только с progress и job_count
+    new_data = {
+        'progress': data['progress'],
+        'job_count': data['state']['job_count']
+    }
+
+    return JsonResponse(new_data, safe=False)  # Возвращаем JSON как Django JsonResponse
+
